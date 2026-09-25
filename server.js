@@ -5,7 +5,7 @@
 // within the TTL don't re-hit the source.
 const express = require('express');
 const path = require('path');
-const { scrapeTicker } = require('./scrape');
+const { scrapeTicker, debugRaw } = require('./scrape');
 
 const PORT = process.env.PORT || 3000;
 
@@ -73,6 +73,14 @@ app.get('/api/fundamentals/:ticker', async (req, res) => {
   try {
     const data = await buildResponse(req.params.ticker, years);
     res.json(data);
+  } catch (err) {
+    res.status(err.status || 500).json({ error: err.message });
+  }
+});
+
+app.get('/api/debug/:ticker', async (req, res) => {
+  try {
+    res.json(await debugRaw(req.params.ticker));
   } catch (err) {
     res.status(err.status || 500).json({ error: err.message });
   }
