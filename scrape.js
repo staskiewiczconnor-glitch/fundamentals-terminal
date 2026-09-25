@@ -143,4 +143,19 @@ async function scrapeTicker(ticker) {
   return { ticker: ticker.toUpperCase(), name, quarters };
 }
 
-module.exports = { scrapeTicker, parseTable, parseNum, trailingSum };
+async function debugRaw(ticker) {
+  const slug = ticker.toLowerCase();
+  const incomeURL = `https://stockanalysis.com/stocks/${slug}/financials/income-statement/?p=quarterly`;
+  const ratiosURL = `https://stockanalysis.com/stocks/${slug}/financials/ratios/?p=quarterly`;
+  const [incomeHTML, ratiosHTML] = await Promise.all([fetchHTML(incomeURL), fetchHTML(ratiosURL)]);
+  const $i = cheerio.load(incomeHTML);
+  const $r = cheerio.load(ratiosHTML);
+  return {
+    mainTable: parseTable($i, $i('#main-table-main')),
+    addlTable: parseTable($i, $i('#main-table-additional-metrics')),
+    priceTable: parseTable($r, $r('#main-table-price-ratios')),
+    effTable: parseTable($r, $r('#main-table-financial-efficiency')),
+  };
+}
+
+module.exports = { scrapeTicker, parseTable, parseNum, trailingSum, debugRaw };
