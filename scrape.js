@@ -114,9 +114,11 @@ async function scrapeTicker(ticker) {
   const revenueQ = quarterLabels.map((label) => ({ end: label, val: parseNum(revenueByQ[label]) }));
   const fcfQ = quarterLabels.map((label) => ({ end: label, val: parseNum(fcfByQ[label]) }));
 
-  // Figures on the page are in billions (e.g. "109.42"); charts display millions.
-  const revenueTTM = trailingSum(revenueQ).map((q) => ({ end: q.end, val: round2(q.val * 1000) }));
-  const fcfTTM = trailingSum(fcfQ).map((q) => ({ end: q.end, val: round2(q.val * 1000) }));
+  // The "Billions" toggle only reformats the DOM after client-side JS hydrates; the raw
+  // SSR HTML a server-side fetch actually receives is comma-formatted millions already
+  // (e.g. "109,417"), which is exactly the unit the charts want - no scaling needed.
+  const revenueTTM = trailingSum(revenueQ).map((q) => ({ end: q.end, val: round2(q.val) }));
+  const fcfTTM = trailingSum(fcfQ).map((q) => ({ end: q.end, val: round2(q.val) }));
 
   const revenueTTMByQ = new Map(revenueTTM.map((q) => [q.end, q.val]));
   const fcfTTMByQ = new Map(fcfTTM.map((q) => [q.end, q.val]));
@@ -127,7 +129,7 @@ async function scrapeTicker(ticker) {
   const anchorQuarters = quarterLabels.filter((label) => revenueTTMByQ.has(label));
 
   const quarters = anchorQuarters.map((label) => {
-    const shares = parseNum(sharesByQ[label]); // billions, rounded by the source site
+    const shares = parseNum(sharesByQ[label]); // already millions of shares, comma-formatted
     const roePct = parseNum(roeByQ[label]); // e.g. 111.36 meaning 111.36%
     return {
       end: label,
@@ -136,26 +138,11 @@ async function scrapeTicker(ticker) {
       debtEquity: parseNum(deByQ[label]),
       peRatio: parseNum(peByQ[label]),
       roeTTM: roePct == null ? null : Math.round((roePct / 100) * 1000) / 1000,
-      sharesOutstanding: shares == null ? null : round2(shares * 1000),
+      sharesOutstanding: shares == null ? null : round2(shares),
     };
   });
 
   return { ticker: ticker.toUpperCase(), name, quarters };
 }
 
-async function debugRaw(ticker) {
-  const slug = ticker.toLowerCase();
-  const incomeURL = `https://stockanalysis.com/stocks/${slug}/financials/income-statement/?p=quarterly`;
-  const ratiosURL = `https://stockanalysis.com/stocks/${slug}/financials/ratios/?p=quarterly`;
-  const [incomeHTML, ratiosHTML] = await Promise.all([fetchHTML(incomeURL), fetchHTML(ratiosURL)]);
-  const $i = cheerio.load(incomeHTML);
-  const $r = cheerio.load(ratiosHTML);
-  return {
-    mainTable: parseTable($i, $i('#main-table-main')),
-    addlTable: parseTable($i, $i('#main-table-additional-metrics')),
-    priceTable: parseTable($r, $r('#main-table-price-ratios')),
-    effTable: parseTable($r, $r('#main-table-financial-efficiency')),
-  };
-}
-
-module.exports = { scrapeTicker, parseTable, parseNum, trailingSum, debugRaw };
+module.exports = { scrapeTicker, parseTable, parseNum, trailingSum };
