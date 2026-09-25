@@ -95,7 +95,10 @@ async function scrapeTicker(ticker) {
   const effTable = parseTable($r, $r('#main-table-financial-efficiency'));
 
   const revenueByQ = mainTable['Revenue'] || {};
-  const sharesByQ = mainTable['Shares Outstanding (Diluted)'] || mainTable['Shares Outstanding (Basic)'] || {};
+  // Basic (not diluted) is what "shares outstanding" conventionally means on a fundamentals
+  // dashboard - the diluted count is a hypothetical EPS-calculation figure that runs higher
+  // whenever there are options/RSUs/converts outstanding, which inflated this metric before.
+  const sharesByQ = mainTable['Shares Outstanding (Basic)'] || mainTable['Shares Outstanding (Diluted)'] || {};
   const fcfByQ = addlTable['Free Cash Flow'] || {};
   const peByQ = priceTable['PE Ratio'] || {};
   const deByQ = effTable['Debt / Equity Ratio'] || {};
