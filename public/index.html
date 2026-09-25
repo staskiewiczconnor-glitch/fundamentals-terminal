@@ -119,10 +119,10 @@
   </div>
 
   <footer>
-    Data: SEC EDGAR XBRL company facts (financial-statement figures) + Stooq daily closes (price, for P/E).
-    Figures are derived from as-filed 10-Q/10-K data — quarterly discrete values are computed from
-    reported cumulative/quarterly XBRL facts, not hand-curated. Verify anything decision-critical
-    against the filing itself.
+    Data: stockanalysis.com quarterly financial statements and ratios. Revenue and Free Cash Flow
+    are rolled into trailing-twelve-month figures here; Debt/Equity, P/E, ROE, and Shares Outstanding
+    are the source site's own quarter-end figures. Verify anything decision-critical against the
+    filing itself.
   </footer>
 </div>
 
@@ -169,22 +169,17 @@ async function run(){
   if(!ticker){ tickerEl.focus(); return; }
   const years = yearsEl.value;
   goBtn.disabled = true;
-  setStatus(`Pulling ${ticker} from SEC EDGAR…`, false);
+  setStatus(`Pulling ${ticker}…`, false);
   gridEl.style.display='none'; emptyEl.style.display='none'; companylineEl.style.display='none';
 
   try{
     const res = await fetch(`/api/fundamentals/${encodeURIComponent(ticker)}?years=${years}`);
     const data = await res.json();
     if(!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
-    if(!data.quarters.length) throw new Error(`No quarterly XBRL data on file for ${ticker}.`);
+    if(!data.quarters.length) throw new Error(`No quarterly data on file for ${ticker}.`);
     lastData = data;
     render(data);
-    setStatus(
-      data.priceDataAvailable
-        ? `${data.quarters.length} quarters loaded.`
-        : `${data.quarters.length} quarters loaded. Price feed unavailable — P/E chart will be empty.`,
-      false
-    );
+    setStatus(`${data.quarters.length} quarters loaded.`, false);
   }catch(err){
     setStatus(err.message, true);
     gridEl.style.display='none';
@@ -203,7 +198,7 @@ function setStatus(msg, isErr){
 function render(data){
   companylineEl.style.display='flex';
   companyNameEl.textContent = data.name;
-  companyMetaEl.textContent = `${data.ticker} · CIK ${data.cik} · as of ${data.summary ? data.summary.asOf : '—'}`;
+  companyMetaEl.textContent = `${data.ticker} · as of ${data.summary ? data.summary.asOf : '—'}`;
 
   gridEl.style.display='grid';
   gridEl.innerHTML='';
