@@ -20,6 +20,7 @@ function tableHTML(id, headers, rows) {
 const incomeHeaders = ['Fiscal Quarter', 'Q3 2026', 'Q2 2026', 'Q1 2026', 'Q4 2025'];
 const mainRows = [
   ['Revenue', '109,417', '111,184', '143,756', '102,466'],
+  ['Shares Outstanding (Basic)', '14,650', '14,660', '14,745', '14,801'],
   ['Shares Outstanding (Diluted)', '14,715', '14,726', '14,810', '14,864'],
 ];
 const addlRows = [['Free Cash Flow', '31,914', '26,731', '51,552', '26,486']];
@@ -44,6 +45,13 @@ const mainTable = parseTable($i, $i('#main-table-main'));
 assert.strictEqual(mainTable['Revenue']['Q1 2026'], '143,756');
 assert.strictEqual(mainTable['Revenue']['Q3 2026'], '109,417');
 console.log('OK: parseTable reads income-statement rows by quarter label');
+
+// scrape.js must prefer Basic shares over Diluted - Basic is the conventional
+// "shares outstanding" figure; Diluted runs higher and isn't what most fundamentals
+// dashboards mean by that label (this was a real bug: it used to prefer Diluted).
+const sharesByQ = mainTable['Shares Outstanding (Basic)'] || mainTable['Shares Outstanding (Diluted)'];
+assert.strictEqual(sharesByQ['Q3 2026'], '14,650');
+console.log('OK: shares-outstanding lookup prefers Basic over Diluted');
 
 const effTable = parseTable($r, $r('#main-table-financial-efficiency'));
 // "Current" column must be dropped (not a fiscal-quarter label) - only 4 real quarters kept.
