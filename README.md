@@ -11,7 +11,7 @@ The server scrapes two of [stockanalysis.com](https://stockanalysis.com)'s quart
 financial-statement pages per ticker:
 
 - `/stocks/{TICKER}/financials/income-statement/?p=quarterly` — Revenue, Free Cash
-  Flow, Shares Outstanding (Diluted)
+  Flow, Shares Outstanding (Basic)
 - `/stocks/{TICKER}/financials/ratios/?p=quarterly` — P/E Ratio, Debt/Equity Ratio,
   Return on Equity
 
@@ -26,12 +26,36 @@ Revenue and Free Cash Flow are reported per-quarter on the source site; the serv
 rolls each into a trailing-twelve-month figure (last 4 quarters summed) before
 charting. Debt/Equity, P/E, and ROE are already point-in-time ratios as of each
 quarter end, so those are used as-is. Shares Outstanding is the source site's own
-diluted-share figure, reported to the nearest thousand shares.
+basic-share count (not diluted - diluted includes hypothetical shares from
+options/RSUs/converts and reads noticeably higher), reported to the nearest
+thousand shares.
 
 Every request re-scrapes the live pages (results are cached for 6 hours per
 ticker just to avoid hammering the source on repeat clicks), so a new quarterly
 report shows up here automatically the next time you look up that ticker after
 stockanalysis.com has it — no redeploy, no manual refresh needed.
+
+## Different numbers than another fundamentals tool? That's expected
+
+If you compare this against another site or tool (including one built against a
+different data vendor, like CMLviz), don't expect the numbers to line up exactly.
+Two vendors rarely agree to the last decimal:
+
+- **Shares Outstanding** is the most visibly different metric across vendors,
+  because "shares outstanding" gets reported at least two ways: **basic** (the
+  actual share count) and **diluted** (basic plus the hypothetical effect of
+  options/RSUs/convertible debt, which is always equal or higher). This app uses
+  basic. A vendor using diluted, or a slightly different as-of date, will show a
+  different number - that's not a bug in either tool.
+- **Revenue, Free Cash Flow, ROE, and P/E** can also differ by a few percent to
+  a lot more between vendors, because of different revenue recognition
+  standardization, different net-income adjustments (GAAP vs adjusted) feeding
+  ROE, or a different trailing-twelve-month window. Point-in-time ratios like P/E
+  can also differ simply because the two tools grabbed a quote at different times.
+- This app's numbers are pulled straight from stockanalysis.com's own published
+  quarterly tables with no further adjustment, so if you want to sanity-check a
+  figure, compare it against that site directly rather than against a different
+  vendor's tool.
 
 ## Deploy it for free — Render, ~5 minutes, no credit card
 
