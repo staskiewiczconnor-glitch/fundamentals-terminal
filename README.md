@@ -79,7 +79,7 @@ From there:
   `LongTermDebtNoncurrent + LongTermDebtCurrent + ShortTermBorrowings`, and only
   falls back to total `Liabilities` if a filer tags no debt concept at all — check
   `tags.debtIsFallbackLiabilities` in the API response if a D/E number looks off.
- **ROE (TTM)** = TTM net income ÷ stockholders' equity at that quarter end.
+-  **ROE (TTM)** = TTM net income ÷ stockholders' equity at that quarter end.
 - **P/E (at quarter end)** = (price × shares outstanding) ÷ TTM net income,
   i.e. market cap ÷ TTM earnings — avoids needing a separate EPS/share-count-
   weighting derivation.
