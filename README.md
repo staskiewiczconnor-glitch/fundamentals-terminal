@@ -26,8 +26,7 @@ Revenue and Free Cash Flow are reported per-quarter on the source site; the serv
 rolls each into a trailing-twelve-month figure (last 4 quarters summed) before
 charting. Debt/Equity, P/E, and ROE are already point-in-time ratios as of each
 quarter end, so those are used as-is. Shares Outstanding is the source site's own
-diluted-share figure, which it reports rounded to the nearest whole billion for
-older quarters — a real precision limit of this data source, not a bug.
+diluted-share figure, reported to the nearest thousand shares.
 
 Every request re-scrapes the live pages (results are cached for 6 hours per
 ticker just to avoid hammering the source on repeat clicks), so a new quarterly
@@ -66,8 +65,6 @@ Open **http://localhost:3000**.
 
 ## Known limitations
 
-- Shares Outstanding for historical quarters is only as precise as the source
-  site's own rounding (whole billions for larger companies).
 - The site's fiscal-quarter labels ("Q1 2024") follow each company's own fiscal
   calendar, not the calendar year — that's shown as the chart's x-axis label
   directly rather than converted to a calendar date, since the mapping between
