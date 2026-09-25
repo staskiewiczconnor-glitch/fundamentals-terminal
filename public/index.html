@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Fundamentals Terminal</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<style>
+  :root{
+    --bg:#0a0d12; --panel:#10141b; --panel-2:#0d1117; --border:#1c2430;
+    --text:#dbe4ea; --muted:#6d7a89; --muted-2:#465262;
+    --bar:#4f9dff; --bar-latest:#ffb347;
+    --up:#4ade80; --down:#f87171;
+    --mono: ui-monospace, "SFMono-Regular", "JetBrains Mono", "IBM Plex Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--text);font-family:var(--mono);}
+  body{padding:20px 20px 60px;min-height:100vh}
+  .wrap{max-width:1280px;margin:0 auto}
+
+  header{display:flex;flex-wrap:wrap;align-items:center;gap:14px;margin-bottom:8px}
+  h1{font-size:16px;font-weight:600;letter-spacing:.04em;margin:0;color:var(--text);text-transform:uppercase}
+  h1 span{color:var(--muted)}
+
+  .searchbar{display:flex;align-items:center;gap:8px;margin-left:auto;flex-wrap:wrap}
+  .searchbar input[type=text]{
+    background:var(--panel);border:1px solid var(--border);color:var(--text);
+    padding:9px 12px;font-family:var(--mono);font-size:14px;letter-spacing:.05em;
+    text-transform:uppercase;width:140px;border-radius:4px;
+  }
+  .searchbar input[type=text]:focus{outline:none;border-color:var(--bar)}
+  select{
+    background:var(--panel);border:1px solid var(--border);color:var(--text);
+    padding:9px 10px;font-family:var(--mono);font-size:13px;border-radius:4px;
+  }
+  button{
+    background:var(--bar);border:1px solid var(--bar);color:#04101f;font-weight:700;
+    padding:9px 16px;font-family:var(--mono);font-size:13px;border-radius:4px;cursor:pointer;
+    letter-spacing:.04em;text-transform:uppercase;
+  }
+  button:hover{filter:brightness(1.1)}
+  button:disabled{opacity:.5;cursor:default}
+  button.ghost{background:transparent;color:var(--muted);border-color:var(--border);text-transform:none;font-weight:400}
+  button.ghost:hover{color:var(--text);border-color:var(--muted-2)}
+
+  .chips{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 18px}
+  .chip{
+    border:1px solid var(--border);color:var(--muted);background:var(--panel);
+    padding:4px 10px;font-size:12px;border-radius:999px;cursor:pointer;letter-spacing:.03em
+  }
+  .chip:hover{color:var(--text);border-color:var(--bar)}
+
+  .status{color:var(--muted);font-size:13px;margin:10px 0 18px;min-height:18px}
+  .status.err{color:var(--down)}
+
+  .companyline{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin:6px 0 2px}
+  .companyline .name{font-size:15px;color:var(--text)}
+  .companyline .meta{font-size:12px;color:var(--muted)}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:16px;margin-top:16px}
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:16px 16px 8px}
+  .card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:6px}
+  .card-title{font-size:12px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+  .card-value{font-size:20px;font-weight:700;color:var(--text)}
+  .card-value .unit{font-size:12px;color:var(--muted);font-weight:400;margin-left:4px}
+  .yoy{font-size:12px;padding:2px 7px;border-radius:999px;white-space:nowrap}
+  .yoy.up{color:var(--up);background:rgba(74,222,128,.1)}
+  .yoy.down{color:var(--down);background:rgba(248,113,113,.1)}
+  .card-sub{font-size:11px;color:var(--muted-2);margin:2px 0 10px;line-height:1.5}
+  .legend{display:flex;gap:14px;font-size:11px;color:var(--muted);margin-bottom:6px}
+  .legend i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;vertical-align:middle}
+  canvas{width:100%!important;height:220px!important}
+
+  .tablewrap{margin-top:26px;display:none}
+  .tablewrap.show{display:block}
+  table{width:100%;border-collapse:collapse;font-size:12px}
+  th,td{padding:6px 10px;text-align:right;border-bottom:1px solid var(--border);white-space:nowrap}
+  th:first-child,td:first-child{text-align:left;color:var(--muted)}
+  th{color:var(--muted);font-weight:600;text-transform:uppercase;font-size:10px;letter-spacing:.05em}
+  tbody tr:hover{background:var(--panel-2)}
+  .tablescroll{overflow-x:auto;border:1px solid var(--border);border-radius:6px}
+
+  footer{margin-top:40px;color:var(--muted-2);font-size:11px;line-height:1.6}
+  footer a{color:var(--muted)}
+  .empty{color:var(--muted);font-size:13px;margin-top:60px;text-align:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>Fundamentals <span>// terminal</span></h1>
+    <div class="searchbar">
+      <input id="ticker" type="text" placeholder="TICKER" maxlength="8" autocomplete="off" spellcheck="false" />
+      <select id="years">
+        <option value="3">3Y</option>
+        <option value="5" selected>5Y</option>
+        <option value="10">10Y</option>
+      </select>
+      <button id="go">Pull</button>
+      <button class="ghost" id="tableToggle">Table view</button>
+    </div>
+  </header>
+
+  <div class="chips" id="chips"></div>
+  <div class="status" id="status"></div>
+  <div class="companyline" id="companyline" style="display:none">
+    <span class="name" id="companyName"></span>
+    <span class="meta" id="companyMeta"></span>
+  </div>
+
+  <div class="grid" id="grid" style="display:none"></div>
+  <div class="empty" id="empty">Enter a ticker (US-listed, SEC-filing companies) and hit Pull.</div>
+
+  <div class="tablewrap" id="tablewrap">
+    <div class="tablescroll">
+      <table id="datatable"></table>
+    </div>
+  </div>
+
+  <footer>
+    Data: SEC EDGAR XBRL company facts (financial-statement figures) + Stooq daily closes (price, for P/E).
+    Figures are derived from as-filed 10-Q/10-K data — quarterly discrete values are computed from
+    reported cumulative/quarterly XBRL facts, not hand-curated. Verify anything decision-critical
+    against the filing itself.
+  </footer>
+</div>
+
+<script>
+const METRICS = [
+  { key:'revenueTTM',        label:'Revenue (TTM)',                unit:'$M',  fmt:v=>fmtNum(v) },
+  { key:'fcfTTM',             label:'Free Cash Flow (TTM)',         unit:'$M',  fmt:v=>fmtNum(v) },
+  { key:'debtEquity',         label:'Debt / Equity',                unit:'x',   fmt:v=>v==null?'—':v.toFixed(2) },
+  { key:'peRatio',            label:'Price / Earnings (at Q-end)',  unit:'x',   fmt:v=>v==null?'—':v.toFixed(2) },
+  { key:'roeTTM',             label:'Return on Equity (TTM)',       unit:'x',   fmt:v=>v==null?'—':v.toFixed(2) },
+  { key:'sharesOutstanding',  label:'Shares Outstanding',           unit:'M',   fmt:v=>fmtNum(v) },
+];
+
+const $ = (id) => document.getElementById(id);
+const tickerEl = $('ticker'), yearsEl = $('years'), goBtn = $('go'), statusEl = $('status');
+const gridEl = $('grid'), emptyEl = $('empty'), chipsEl = $('chips');
+const companylineEl = $('companyline'), companyNameEl = $('companyName'), companyMetaEl = $('companyMeta');
+const tableToggle = $('tableToggle'), tablewrap = $('tablewrap'), datatable = $('datatable');
+
+let charts = {};
+let lastData = null;
+
+function fmtNum(v){
+  if (v==null) return '—';
+  return v.toLocaleString('en-US', { maximumFractionDigits: 0 });
+}
+
+['AAPL','MSFT','NVDA','GOOGL','AMZN','TSLA'].forEach(t=>{
+  const c = document.createElement('span');
+  c.className='chip'; c.textContent=t;
+  c.onclick=()=>{ tickerEl.value=t; run(); };
+  chipsEl.appendChild(c);
+});
+
+goBtn.onclick = run;
+tickerEl.addEventListener('keydown', e=>{ if(e.key==='Enter') run(); });
+tableToggle.onclick = ()=>{
+  tablewrap.classList.toggle('show');
+  tableToggle.textContent = tablewrap.classList.contains('show') ? 'Chart view' : 'Table view';
+};
+
+async function run(){
+  const ticker = tickerEl.value.trim().toUpperCase();
+  if(!ticker){ tickerEl.focus(); return; }
+  const years = yearsEl.value;
+  goBtn.disabled = true;
+  setStatus(`Pulling ${ticker} from SEC EDGAR…`, false);
+  gridEl.style.display='none'; emptyEl.style.display='none'; companylineEl.style.display='none';
+
+  try{
+    const res = await fetch(`/api/fundamentals/${encodeURIComponent(ticker)}?years=${years}`);
+    const data = await res.json();
+    if(!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
+    if(!data.quarters.length) throw new Error(`No quarterly XBRL data on file for ${ticker}.`);
+    lastData = data;
+    render(data);
+    setStatus(
+      data.priceDataAvailable
+        ? `${data.quarters.length} quarters loaded.`
+        : `${data.quarters.length} quarters loaded. Price feed unavailable — P/E chart will be empty.`,
+      false
+    );
+  }catch(err){
+    setStatus(err.message, true);
+    gridEl.style.display='none';
+    emptyEl.style.display='block';
+    emptyEl.textContent = 'Nothing pulled — fix the ticker and try again.';
+  }finally{
+    goBtn.disabled = false;
+  }
+}
+
+function setStatus(msg, isErr){
+  statusEl.textContent = msg;
+  statusEl.className = 'status' + (isErr ? ' err' : '');
+}
+
+function render(data){
+  companylineEl.style.display='flex';
+  companyNameEl.textContent = data.name;
+  companyMetaEl.textContent = `${data.ticker} · CIK ${data.cik} · as of ${data.summary ? data.summary.asOf : '—'}`;
+
+  gridEl.style.display='grid';
+  gridEl.innerHTML='';
+  Object.values(charts).forEach(c=>c.destroy());
+  charts = {};
+
+  METRICS.forEach(m=>{
+    const card = document.createElement('div');
+    card.className='card';
+
+    const summary = data.summary ? data.summary[m.key] : null;
+    const yoy = summary ? summary.yoyPct : null;
+    const yoyHtml = yoy==null ? '' :
+      `<span class="yoy ${yoy>=0?'up':'down'}">${yoy>=0?'+':''}${yoy}% YoY</span>`;
+
+    card.innerHTML = `
+      <div class="card-head">
+        <div>
+          <div class="card-title">${m.label}</div>
+          <div class="card-value">${summary ? m.fmt(summary.value) : '—'} <span class="unit">${m.unit}</span></div>
+        </div>
+        ${yoyHtml}
+      </div>
+      <div class="card-sub">${data.ticker}: ${m.label.toLowerCase()} is ${summary?m.fmt(summary.value):'—'} ${m.unit}, as of ${data.summary?data.summary.asOf:'—'}.</div>
+      <div class="legend"><span><i style="background:var(--bar)"></i>Historical</span><span><i style="background:var(--bar-latest)"></i>Latest quarter</span></div>
+      <canvas id="chart-${m.key}"></canvas>
+    `;
+    gridEl.appendChild(card);
+
+    const labels = data.quarters.map(q=>q.end);
+    const values = data.quarters.map(q=>q[m.key]);
+    const colors = values.map((_,i)=> i===values.length-1 ? getVar('--bar-latest') : getVar('--bar'));
+
+    const ctx = card.querySelector('canvas').getContext('2d');
+    charts[m.key] = new Chart(ctx, {
+      type:'bar',
+      data:{ labels, datasets:[{ data: values, backgroundColor: colors, borderRadius:3, borderSkipped:false, maxBarThickness:26 }] },
+      options:{
+        responsive:true, maintainAspectRatio:false,
+        plugins:{
+          legend:{ display:false },
+          tooltip:{
+            backgroundColor:'#0d1117', borderColor:'#1c2430', borderWidth:1,
+            titleColor:'#dbe4ea', bodyColor:'#dbe4ea', padding:10, displayColors:false,
+            callbacks:{ label: ctx => `${m.label}: ${m.fmt(ctx.parsed.y)} ${m.unit}` }
+          }
+        },
+        scales:{
+          x:{ ticks:{ color:'#6d7a89', maxRotation:0, autoSkip:true, font:{size:10} }, grid:{ display:false }, border:{ color:'#1c2430' } },
+          y:{ ticks:{ color:'#6d7a89', font:{size:10}, callback:v=>fmtNum(v) }, grid:{ color:'#161c26' }, border:{ display:false } }
+        }
+      }
+    });
+  });
+
+  renderTable(data);
+}
+
+function getVar(name){
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
+
+function renderTable(data){
+  const head = `<thead><tr><th>Quarter End</th>${METRICS.map(m=>`<th>${m.label}</th>`).join('')}</tr></thead>`;
+  const rows = data.quarters.slice().reverse().map(q=>
+    `<tr><td>${q.end}</td>${METRICS.map(m=>`<td>${m.fmt(q[m.key])}</td>`).join('')}</tr>`
+  ).join('');
+  datatable.innerHTML = head + `<tbody>${rows}</tbody>`;
+}
+</script>
+</body>
+</html>
