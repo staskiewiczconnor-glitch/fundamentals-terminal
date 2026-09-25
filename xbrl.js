@@ -7,20 +7,29 @@ function daysBetween(a, b) {
 return Math.round((new Date(b) - new Date(a)) / DAY);
 }
 
-// Pick the first tag in `tags` that has a non-empty unit series in `facts[taxonomy]`.
+// Pick whichever tag in `tags` actually has the freshest data in `facts[taxonomy]`.
+// Companies often carry a legacy tag (e.g. pre-ASC-606 "Revenues") alongside the
+// modern one they've since switched to; picking the first non-empty match by list
+// order can silently lock onto years-stale data if the legacy tag still has *some*
+// history. Comparing max `end` date across candidates picks the tag that's actually
+// still being filed against.
 // Returns { tag, raw: [{start?,end,val,fy,fp,form,filed}] } or null.
 function pickConcept(facts, taxonomy, tags, unitKeys) {
-const node = facts && facts[taxonomy];
-if (!node) return null;
-for (const tag of tags) {
-const concept = node[tag];
-if (!concept || !concept.units) continue;
-for (const uk of unitKeys) {
-const arr = concept.units[uk];
-if (arr && arr.length) return { tag, unit: uk, raw: arr };
-}
-}
-return null;
+  const node = facts && facts[taxonomy];
+  if (!node) return null;
+  let best = null;
+  for (const tag of tags) {
+    const concept = node[tag];
+    if (!concept || !concept.units) continue;
+    for (const uk of unitKeys) {
+      const arr = concept.units[uk];
+      if (!arr || !arr.length) continue;
+      let maxEnd = '';
+      for (const f of arr) if (f.end && f.end > maxEnd) maxEnd = f.end;
+      if (!best || maxEnd > best.maxEnd) best = { tag, unit: uk, raw: arr, maxEnd };
+    }
+  }
+  return best;
 }
 
 // Dedupe instant (point-in-time) facts by `end` date, keeping the most recently filed value.
